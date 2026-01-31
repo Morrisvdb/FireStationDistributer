@@ -19,7 +19,7 @@ MAX_RESPONSE_TIME_MIN = 6
 
 SPEED_INCREASE_KPH = 20
 
-place_stripped = PLACE_NAME.split(",")[0].lower()
+place_stripped = PLACE_NAME.split(",")[0].lower().replace(" ", "_")
 OUTPUT_FILE = place_stripped+"_firestation_solution.json"
 
 MAX_RESPONSE_TIME_SEC = MAX_RESPONSE_TIME_MIN * 60
@@ -29,6 +29,8 @@ try:
     for currentArg, currentVal in arguments:
         if currentArg in ("-l", "--location"):
             PLACE_NAME = currentVal
+            place_stripped = PLACE_NAME.split(",")[0].lower()
+            OUTPUT_FILE = place_stripped+"_firestation_solution.json"
         elif currentArg in ("-t", "--time"):
             MAX_RESPONSE_TIME_MIN = currentVal
         elif currentArg in ("-o", "--output"):
