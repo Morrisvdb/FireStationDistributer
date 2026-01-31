@@ -3,21 +3,54 @@ import networkx as nx
 import json
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import os
+import os, sys, getopt
+from render import render_map
 
 # -----------------------------
 # CONFIG
 # -----------------------------
-PLACE_NAME = "Brooklyn, New York, USA"
+args = sys.argv[1:]
+options = "l:t:s:"
+long_options = ["Location=", "Time=", "speed_increase="]
+
+PLACE_NAME = "Utrecht, Netherlands"
 
 MAX_RESPONSE_TIME_MIN = 6
+
+SPEED_INCREASE_KPH = 20
 
 place_stripped = PLACE_NAME.split(",")[0].lower()
 OUTPUT_FILE = place_stripped+"_firestation_solution.json"
 
 MAX_RESPONSE_TIME_SEC = MAX_RESPONSE_TIME_MIN * 60
-SPEED_INCREASE_KPH = 20
 
+try:
+    arguments, values = getopt.getopt(args, options, long_options)
+    for currentArg, currentVal in arguments:
+        if currentArg in ("-l", "--location"):
+            PLACE_NAME = currentVal
+        elif currentArg in ("-t", "--time"):
+            MAX_RESPONSE_TIME_MIN = currentVal
+        elif currentArg in ("-o", "--output"):
+            OUTPUT_FILE = currentVal
+        elif currentArg in ("-s", "---speed-increase"):
+            try:
+                SPEED_INCREASE_KPH = int(currentVal)
+            except ValueError:
+                print("Speed increase must be a whole number.")
+                exit(1)
+except getopt.error as err:
+    print(str(err))
+
+
+
+
+print("----------------------")
+print("Running script with the following arguments:")
+print("Location: "+PLACE_NAME)
+print("Maximum Time: "+str(MAX_RESPONSE_TIME_MIN))
+print("Speed Increase: "+ str(SPEED_INCREASE_KPH))
+print("----------------------")
 
 # -----------------------------
 # LOAD GRAPH
@@ -57,7 +90,7 @@ nodes = set(G.nodes)
 # -----------------------------
 # PRECOMPUTE COVERAGE SETS
 # -----------------------------
-print("Computing coverage sets (this may take a while)...")
+print("Computing coverage sets...")
 
 coverage = {}
 
@@ -106,9 +139,9 @@ while uncovered:
     print(
         f"Added station {len(firestations)} | "
         f"Covered {len(best_covered)} nodes | "
-        f"Remaining {len(uncovered)}"
+        f"Remaining {len(uncovered)}",
+        end="\r"
     )
-    print(firestations)
 
 # -----------------------------
 # COMPUTE SERVICE DISTANCE PER NODE
@@ -146,7 +179,8 @@ for dist_dict in results:
 # -----------------------------
 # SAVE AS COORDINATES
 # -----------------------------
-print("Saving solution...")
+print(f"Found a solution with {len(firestations)} fire stations")
+print("Saving solution to "+OUTPUT_FILE)
 solution = {
     "firestations": [str(station) for station in firestations],
     "nodes": {},
@@ -161,4 +195,7 @@ for station in firestations:
 with open(OUTPUT_FILE, "w") as f:
     json.dump(solution, f)
 
-print(f"Done. Placed {len(firestations)} fire stations.")
+place_stripped = PLACE_NAME.split(",")[0].lower()
+OUTPUT_MAP = place_stripped + "_firestation_map.html"
+
+render_map(OUTPUT_FILE, OUTPUT_MAP)
