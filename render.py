@@ -119,4 +119,4 @@ if __name__ == '__main__':
     place_stripped = PLACE_NAME.split(",")[0].lower()
     OUTPUT_MAP = place_stripped + "_firestation_map.html"
         
-    render_map(place_name=PLACE_NAME, output_map=OUTPUT_MAP)
+    render_map(file=SOLUTION_FILE, output_map=OUTPUT_MAP)
